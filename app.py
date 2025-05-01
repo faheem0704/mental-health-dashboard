@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from sklearn.preprocessing import LabelEncoder
 
 # -------------------- PAGE CONFIG --------------------
 st.set_page_config(layout="wide")
@@ -10,11 +11,10 @@ st.title("🧠 Post-COVID Mental Health Dashboard")
 survey = pd.read_csv("data/survey.csv")
 suicide = pd.read_csv("data/Crude suicide rates.csv")
 
-# -------------------- CLEAN COLUMN NAMES --------------------
-# Suicide dataset
+# -------------------- CLEAN SUICIDE DATA --------------------
 suicide.columns = suicide.columns.str.strip().str.lower()
 
-# Fix 'sex' ➜ 'gender'
+# Rename 'sex' to 'gender' if needed
 if 'sex' in suicide.columns:
     suicide.rename(columns={'sex': 'gender'}, inplace=True)
 
@@ -22,21 +22,18 @@ if 'sex' in suicide.columns:
 if 'gender' in suicide.columns:
     suicide['gender'] = suicide['gender'].astype(str).str.strip().str.title()
 
-# Detect age columns (e.g. 80_above, 70to79, etc.)
+# Detect age-related columns (like 80_above, 70to79, etc.)
 age_columns = [col for col in suicide.columns if any(x in col for x in ['to', 'above'])]
 
 # -------------------- SIDEBAR FILTERS --------------------
 st.sidebar.header("Filter Suicide Data")
-st.sidebar.write("Suicide Columns:", suicide.columns.tolist())
-st.sidebar.write("Age columns:", age_columns)
-
 selected_gender = st.sidebar.selectbox("Select Gender", suicide['gender'].unique())
 
 if age_columns:
     selected_age_group = st.sidebar.selectbox("Select Age Group", age_columns)
 else:
     selected_age_group = None
-    st.sidebar.warning("No age group columns found.")
+    st.sidebar.warning("No age group columns found in suicide dataset.")
 
 # -------------------- TABS --------------------
 tab1, tab2, tab3 = st.tabs(["📈 Suicide Insights", "📋 Survey Correlation", "🔎 Raw Data"])
@@ -69,12 +66,18 @@ with tab1:
 with tab2:
     st.subheader("Survey Feature Correlation Heatmap")
 
-    # Convert object columns to numeric if possible
-    for col in survey.columns:
-        survey[col] = pd.to_numeric(survey[col], errors='ignore')
+    # Encode categorical columns for correlation
+    survey_encoded = survey.copy()
+    le = LabelEncoder()
 
-    # Filter numeric columns only
-    survey_clean = survey.select_dtypes(include=['int64', 'float64'])
+    for col in survey_encoded.columns:
+        if survey_encoded[col].dtype == 'object':
+            try:
+                survey_encoded[col] = le.fit_transform(survey_encoded[col].astype(str))
+            except:
+                continue  # Skip problematic columns
+
+    survey_clean = survey_encoded.select_dtypes(include=['int64', 'float64'])
 
     if survey_clean.shape[1] > 1:
         corr = survey_clean.corr().round(2)
