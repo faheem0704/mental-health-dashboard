@@ -10,8 +10,10 @@ st.title("🧠 Post-COVID Mental Health Dashboard")
 survey = pd.read_csv("data/survey.csv")
 suicide = pd.read_csv("data/Crude suicide rates.csv")
 
-# --- Clean gender ---
+
+suicide.rename(columns={'sex': 'gender'}, inplace=True)
 suicide['gender'] = suicide['gender'].str.strip().str.title()
+
 
 # --- Sidebar Filters ---
 st.sidebar.header("Filter Suicide Data")
