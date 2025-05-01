@@ -10,6 +10,10 @@ st.title("🧠 Post-COVID Mental Health Dashboard")
 survey = pd.read_csv("data/survey.csv")
 suicide = pd.read_csv("data/Crude suicide rates.csv")
 
+# Clean column names for the suicide dataset
+suicide.columns = suicide.columns.str.strip().str.lower()
+
+
 # DEBUG: See actual column names (this helps in case of crashes)
 st.sidebar.write("Suicide Columns:", suicide.columns.tolist())
 
