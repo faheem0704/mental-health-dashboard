@@ -10,15 +10,22 @@ st.title("🧠 Post-COVID Mental Health Dashboard")
 survey = pd.read_csv("data/survey.csv")
 suicide = pd.read_csv("data/Crude suicide rates.csv")
 
+# DEBUG: See actual column names (this helps in case of crashes)
+st.sidebar.write("Suicide Columns:", suicide.columns.tolist())
 
-suicide.rename(columns={'sex': 'gender'}, inplace=True)
-suicide['gender'] = suicide['gender'].str.strip().str.title()
+# Fix column name if needed
+if 'sex' in suicide.columns:
+    suicide.rename(columns={'sex': 'gender'}, inplace=True)
 
+# Confirm 'gender' exists before modifying
+if 'gender' in suicide.columns:
+    suicide['gender'] = suicide['gender'].astype(str).str.strip().str.title()
 
 # --- Sidebar Filters ---
 st.sidebar.header("Filter Suicide Data")
 selected_gender = st.sidebar.selectbox("Select Gender", suicide['gender'].unique())
-selected_age_group = st.sidebar.selectbox("Select Age Group", [col for col in suicide.columns if 'age_' in col])
+age_columns = [col for col in suicide.columns if 'age_' in col]
+selected_age_group = st.sidebar.selectbox("Select Age Group", age_columns)
 
 # Filtered suicide data
 filtered_suicide = suicide[suicide['gender'] == selected_gender].sort_values(by=selected_age_group, ascending=False).head(10)
@@ -51,8 +58,7 @@ with tab2:
 # --- Tab 3 ---
 with tab3:
     st.subheader("Raw Data Preview")
-    st.write("Filtered Suicide Dataset")
     st.dataframe(filtered_suicide)
 
 st.sidebar.markdown("---")
-st.sidebar.info("Dashboard by YOU 😎 using Streamlit + Plotly")
+st.sidebar.info("Dashboard created with Streamlit + Plotly")
